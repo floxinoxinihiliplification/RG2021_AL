@@ -268,14 +268,16 @@ int main() {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+    stbi_set_flip_vertically_on_load(false);
+
     vector<std::string> faces
             {
-                    FileSystem::getPath("resources/textures/skybox/right.jpeg"),
-                    FileSystem::getPath("resources/textures/skybox/left.jpeg"),
-                    FileSystem::getPath("resources/textures/skybox/top.jpeg"),
-                    FileSystem::getPath("resources/textures/skybox/bottom.jpeg"),
-                    FileSystem::getPath("resources/textures/skybox/front.jpeg"),
-                    FileSystem::getPath("resources/textures/skybox/back.jpeg")
+                    FileSystem::getPath("resources/textures/skybox/right.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/left.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/top.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/bottom.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/front.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/back.jpg")
             };
 
     skyboxShader.use();
@@ -335,10 +337,7 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        glm::mat4 model = glm::mat4(1.0f);
-        ourShader.setMat4("model", model);
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+
 
         pointLight.position = glm::vec3(4.0, 4.0f, 4.0); //* cos(currentFrame),  * sin(currentFrame)
         ourShader.setVec3("pointLight.position", pointLight.position);
@@ -354,6 +353,10 @@ int main() {
         // render the loaded model
         projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         view = programState->camera.GetViewMatrix();
+        glm::mat4 model = glm::mat4(1.0f);
+        ourShader.setMat4("model", model);
+        ourShader.setMat4("projection", projection);
+        ourShader.setMat4("view", view);
 
         model = glm::translate(model,
                                programState->backpackPosition); // translate it down so it's at the center of the scene
@@ -363,13 +366,9 @@ int main() {
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
+        projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+        view = programState->camera.GetViewMatrix();
 
-
-
-
-
-        if (programState->ImGuiEnabled)
-            DrawImGui(programState);
 
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
@@ -383,6 +382,28 @@ int main() {
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
         //glBindVertexArray(0);
+
+
+
+        if (programState->ImGuiEnabled)
+            DrawImGui(programState);
+
+
+//        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+//        skyboxShader.use();
+//
+//        skyboxShader.setMat4("view", glm::mat4(glm::mat3(view)));
+//        skyboxShader.setMat4("projection", projection);
+//
+//        glBindVertexArray(skyboxVAO);
+//        glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+//
+//        glDrawArrays(GL_TRIANGLES, 0, 36);
+//
+//        glBindVertexArray(0);
+//
+//        glDepthFunc(GL_LESS);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
