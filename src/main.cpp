@@ -385,8 +385,8 @@ int main() {
 
 
 
-        if (programState->ImGuiEnabled)
-            DrawImGui(programState);
+//        if (programState->ImGuiEnabled)
+//            DrawImGui(programState);
 
 
 //        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
@@ -470,41 +470,42 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     programState->camera.ProcessMouseScroll(yoffset);
 }
+//void DrawImGui(ProgramState *programState) {
+//    ImGui_ImplOpenGL3_NewFrame();
+//    ImGui_ImplGlfw_NewFrame();
+//    ImGui::NewFrame();
+//
+//
+//    {
+//        static float f = 0.0f;
+//        ImGui::Begin("Hello window");
+//        ImGui::Text("Hello text");
+//        ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
+//        ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
+//        ImGui::DragFloat3("Backpack position", (float*)&programState->backpackPosition);
+//        ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05, 0.1, 4.0);
+//
+//        ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
+//        ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
+//        ImGui::DragFloat("pointLight.quadratic", &programState->pointLight.quadratic, 0.05, 0.0, 1.0);
+//        ImGui::End();
+//    }
+//
+//    {
+//        ImGui::Begin("Camera info");
+//        const Camera& c = programState->camera;
+//        ImGui::Text("Camera position: (%f, %f, %f)", c.Position.x, c.Position.y, c.Position.z);
+//        ImGui::Text("(Yaw, Pitch): (%f, %f)", c.Yaw, c.Pitch);
+//        ImGui::Text("Camera front: (%f, %f, %f)", c.Front.x, c.Front.y, c.Front.z);
+//        ImGui::Checkbox("Camera mouse update", &programState->CameraMouseMovementUpdateEnabled);
+//        ImGui::End();
+//    }
+//
+//    ImGui::Render();
+//    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+//}
 
-void DrawImGui(ProgramState *programState) {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-
-    {
-        static float f = 0.0f;
-        ImGui::Begin("Hello window");
-        ImGui::Text("Hello text");
-        ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
-        ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
-        ImGui::DragFloat3("Backpack position", (float*)&programState->backpackPosition);
-        ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05, 0.1, 4.0);
-
-        ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.quadratic", &programState->pointLight.quadratic, 0.05, 0.0, 1.0);
-        ImGui::End();
-    }
-
-    {
-        ImGui::Begin("Camera info");
-        const Camera& c = programState->camera;
-        ImGui::Text("Camera position: (%f, %f, %f)", c.Position.x, c.Position.y, c.Position.z);
-        ImGui::Text("(Yaw, Pitch): (%f, %f)", c.Yaw, c.Pitch);
-        ImGui::Text("Camera front: (%f, %f, %f)", c.Front.x, c.Front.y, c.Front.z);
-        ImGui::Checkbox("Camera mouse update", &programState->CameraMouseMovementUpdateEnabled);
-        ImGui::End();
-    }
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
+//
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
