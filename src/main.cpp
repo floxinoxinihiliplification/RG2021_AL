@@ -51,6 +51,7 @@ struct PointLight {
     float quadratic;
 };
 
+//promeniti sa backpack na skull :: kako?
 struct ProgramState {
     glm::vec3 clearColor = glm::vec3(0);
     bool ImGuiEnabled = false;
