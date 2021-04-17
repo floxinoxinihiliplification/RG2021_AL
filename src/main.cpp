@@ -16,6 +16,8 @@
 
 #include <iostream>
 
+unsigned int loadTexture(const char * path);
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
@@ -166,6 +168,7 @@ int main() {
     // -------------------------
     Shader shader("resources/shaders/vertexShader.vs", "resources/shaders/fragmentShader.fs");
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
+    Shader lightingShader("resources/shaders/multiple_lights.vs", "resources/shaders/multiple_lights.fs");
     Shader lightCubeShader("resources/shaders/light_cube.vs", "resources/shaders/light_cube.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     // load models
@@ -307,7 +310,6 @@ int main() {
     glm::vec3 pointLightPositions[] = {
             glm::vec3( 4.7f,  1.2f,  2.0f),
             glm::vec3( 2.3f, -3.3f, -4.0f),
-            glm::vec3(-6.0f,  3.0f, -11.0f),
             glm::vec3( 0.0f,  0.0f, -3.0f)
     };
     //cubes
@@ -319,10 +321,13 @@ int main() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glBindVertexArray(cubeVAO);
+    //pozicije
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    //normale
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    //tex koordinate
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
@@ -333,13 +338,13 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-//
-//    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/tnt_texture.jpg").c_str());
+////
+//    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/container.jpg").c_str());
 //    unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/container2_specular.png").c_str());
-//
-//    lightingShader.use();
-//    lightingShader.setInt("material.diffuse", 0);
-//    lightingShader.setInt("material.specular", 1);
+//    //
+    lightingShader.use();
+    lightingShader.setInt("material.diffuse", 0);
+    lightingShader.setInt("material.specular", 1);
 
 //    float vertices[] = {
 //            0.5f, 0.5f, 0.0f, 1.0, 1.0,//top right
@@ -453,18 +458,30 @@ int main() {
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
 
+//        glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL_TEXTURE_2D, diffuseMap);
+//
+//
+//        glActiveTexture(GL_TEXTURE1);
+//        glBindTexture(GL_TEXTURE_2D, specularMap);
+
         lightCubeShader.use();
         lightCubeShader.setMat4("projection", projection);
         lightCubeShader.setMat4("view", view);
 
-        glBindVertexArray(lightCubeVAO);
-        for (unsigned int i = 0; i < 4; i++)
+
+//        glBindVertexArray(lightCubeVAO);
+        for (unsigned int i = 0; i < 3; i++)
         {
             glm::mat4 modelLight = glm::mat4(1.0f);
-            modelLight = glm::translate(modelLight, pointLightPositions[i]*3.0f*glm::vec3((float)glm::sin(glfwGetTime()), glm::sin(glfwGetTime()*6), glm::cos(glfwGetTime())));
+            modelLight = glm::translate(modelLight, pointLightPositions[i]*3.0f*glm::vec3((float)glm::cos(glfwGetTime()), glm::cos(glfwGetTime()), glm::sin(glfwGetTime())));
             modelLight = glm::scale(modelLight, glm::vec3(3.0f));
             lightCubeShader.setMat4("model", modelLight);
             glDrawArrays(GL_TRIANGLES, 0, 36);
+
+            if (i == 2){
+                //nalepiti teksturu
+            }
         }
 
         // don't forget to enable shader before setting uniforms
@@ -695,4 +712,39 @@ unsigned int loadCubemap(vector<std::string> faces)
 
     return textureID;
 }
+unsigned int loadTexture(const char * path)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
 
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
+}
