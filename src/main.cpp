@@ -164,6 +164,7 @@ int main() {
 
     // build and compile shaders
     // -------------------------
+    Shader shader("resources/shaders/vertexShader.vs", "resources/shaders/fragmentShader.fs");
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader lightCubeShader("resources/shaders/light_cube.vs", "resources/shaders/light_cube.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
@@ -332,13 +333,46 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
-//    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/container.jpg").c_str());
+//
+//    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/tnt_texture.jpg").c_str());
 //    unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/container2_specular.png").c_str());
 //
 //    lightingShader.use();
 //    lightingShader.setInt("material.diffuse", 0);
 //    lightingShader.setInt("material.specular", 1);
+
+//    float vertices[] = {
+//            0.5f, 0.5f, 0.0f, 1.0, 1.0,//top right
+//            0.5f, -0.5f, 0.0f, 1.0, 0.0, //bottom right
+//            -0.5f, -0.5f, 0.0f, 0.0, 0.0,//bottom left
+//            -0.5f, 0.5f, 0.0f, 0.0, 1.0 //top left
+//    };
+//    unsigned int indices[] = {
+//            0, 1, 3, //first triangle
+//            1, 2, 3 //second triangle
+//    };
+//
+//    unsigned int VBO, VAO, EBO;
+//    glGenVertexArrays(1, &VAO);
+//    glGenBuffers(1, &VBO);
+//    glGenBuffers(1, &EBO);
+//    glBindVertexArray(VAO);
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+//
+//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+//    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+//
+//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
+//    glEnableVertexAttribArray(0);
+//
+//    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
+//    glEnableVertexAttribArray(1);
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, 0);
+//    glBindVertexArray(0);
+
 
     //skybox
     unsigned int skyboxVAO, skyboxVBO;
@@ -373,8 +407,12 @@ int main() {
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.001f;
 
+    int degree=0;
+    int lin=1;
 
 
+
+//
 //    unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/container.jpg").c_str());
 //
 //    cubemapShader.use();
@@ -410,8 +448,9 @@ int main() {
         // ------
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
-                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
 
         lightCubeShader.use();
@@ -444,7 +483,7 @@ int main() {
         ourShader.setFloat("material.shininess", 32.0f);
         // view/projection transformations
         // render the loaded model
-        projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
         view = programState->camera.GetViewMatrix();
         glm::mat4 model = glm::mat4(1.0f);
         ourShader.setMat4("model", model);
@@ -453,13 +492,27 @@ int main() {
 
         model = glm::translate(model,
                                programState->backpackPosition); // translate it down so it's at the center of the scene
-        model = glm::rotate(model, -(float)90, glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, -1.5706f, glm::vec3(1.0f, 0.0f, 0.0f));
+//
+//
+//        if(degree==10){
+//            lin=-1;
+//
+//        }
+//        else if(degree==-10){
+//            lin=1;
+//        }
+//        degree+=lin;
+//
+//
+//        model=glm::rotate(model,degree*0.073533f,glm::vec3(cos(currentFrame),sin(currentFrame),0.0f));
         model = glm::rotate(model, -(float)glfwGetTime()*2, glm::vec3(0.0f, 0.0f, 1.0f));
+
         model = glm::scale(model, glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
-        projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
         view = programState->camera.GetViewMatrix();
 
 
@@ -642,3 +695,4 @@ unsigned int loadCubemap(vector<std::string> faces)
 
     return textureID;
 }
+
