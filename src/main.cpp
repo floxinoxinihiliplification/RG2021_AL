@@ -163,7 +163,7 @@ int main() {
     Model ourModel("resources/objects/Skull/12140_Skull_v3_L2.obj");
     ourModel.SetShaderTextureNamePrefix("material.");
 
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    glm::vec3 lightPos(0.0f, 1.0f, 2.0f);
 
     float skyboxVertices[] = {
             -1.0f,  1.0f, -1.0f,
@@ -380,14 +380,15 @@ int main() {
 
 
     PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(0.5, 0.5, 0.5);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.position = lightPos;
+    pointLight.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+    pointLight.diffuse = glm::vec3(0.5, 0.5, 0.5);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
-    pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.001f;
+    pointLight.constant = 0.1f;
+    pointLight.linear = 0.009f;
+    pointLight.quadratic = 0.0001f;
+
 
     int degree=0;
     int lin=1;
@@ -422,14 +423,13 @@ int main() {
 
         tntShader.use();
 
-        tntShader.use();
-        tntShader.setVec3("light.position", lightPos);
+        tntShader.setVec3("light.direction", glm::vec3(glm::sin(glfwGetTime()),-1.0f,glm::cos(glfwGetTime())));
         tntShader.setVec3("viewPos", programState->camera.Position);
 
         // light properties
         tntShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
         tntShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-        tntShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        tntShader.setVec3("light.specular", 0.0f, 0.0f, 0.0f);
 
         // material properties
         tntShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
@@ -439,6 +439,10 @@ int main() {
         tntShader.setMat4("view", view);
 
 
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D,diffuseMap);
+
         for (unsigned int i = 0; i < 3; i++)
         {
             glm::mat4 modelLight = glm::mat4(1.0f);
@@ -446,8 +450,6 @@ int main() {
             modelLight = glm::scale(modelLight, glm::vec3(3.0f));
             tntShader.setMat4("model", modelLight);
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D,diffuseMap);;
 
             glBindVertexArray(cubeVAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -460,8 +462,8 @@ int main() {
         lightCubeShader.setMat4("view", view);
 
         glm::mat4 modelLight = glm::mat4(1.0f);
-        modelLight = glm::translate(modelLight, 3.0f*glm::vec3((float)glm::cos(glfwGetTime()), glm::cos(glfwGetTime()), glm::sin(glfwGetTime())));
-        modelLight = glm::scale(modelLight, glm::vec3(3.0f));
+        modelLight = glm::translate(modelLight, lightPos);
+        modelLight = glm::scale(modelLight, glm::vec3(0.8f));
         lightCubeShader.setMat4("model", modelLight);
 //
 //        glActiveTexture(GL_TEXTURE0);
@@ -493,7 +495,7 @@ int main() {
 
 
         pointLight.position = glm::vec3(4.0, 4.0f, 4.0); //* cos(currentFrame),  * sin(currentFrame)
-        ourShader.setVec3("pointLight.position", pointLight.position);
+        ourShader.setVec3("pointLight.position", lightPos);
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
         ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
         ourShader.setVec3("pointLight.specular", pointLight.specular);
@@ -530,6 +532,7 @@ int main() {
         model = glm::rotate(model, -(float)glfwGetTime()*2, glm::vec3(0.0f, 0.0f, 1.0f));
 
         model = glm::scale(model, glm::vec3(programState->skullScale));    // it's a bit too big for our scene, so scale it down
+
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
