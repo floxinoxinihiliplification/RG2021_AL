@@ -295,7 +295,63 @@ int main() {
     tntShader.setInt("material.diffuse", 0);
 
 
+    //ebo
+    float ebo_vertices[] = {
+            -0.5f, -0.5f, -0.5f, // levo dole nazad
+            0.5f, -0.5f, -0.5f, //desno dole nazad
+            -0.5f, 0.5f, -0.5f, // levo gore nazad
+            0.5f, 0.5f, -0.5f, // desno gore nazad
+            -0.5f, -0.5f, 0.5f, // levo dole napred
+            0.5f, -0.5f, 0.5f, // desno dole napred
+            -0.5f, 0.5f, 0.5f, // levo gore napred
+            0.5f, 0.5f, 0.5f //desno gore napred
+    };
 
+    unsigned int indices[] = {
+            0, 1, 2, //iza
+            1, 2, 3,
+
+            4, 5, 6,//ispred
+            5, 6, 7,
+
+            0, 4, 2,//levo
+            4, 2, 6,
+
+            1, 5, 3,//desno
+            5, 3, 7,
+
+            2, 3, 6, //gore
+            3, 6, 7,
+
+            0, 1, 4,//dole
+            1, 4, 5
+    };
+
+    unsigned int VBO, VAO, EBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ebo_vertices), ebo_vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    glBindVertexArray(0);
+    //kraj ebo
 
 
     //skybox
@@ -397,18 +453,38 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
         }
-
-        glm::mat4 modelLight=glm::mat4(1.0f);
         lightCubeShader.use();
+        projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
         lightCubeShader.setMat4("projection", projection);
+        view = programState->camera.GetViewMatrix();
         lightCubeShader.setMat4("view", view);
-        modelLight = glm::mat4(1.0f);
-        modelLight = glm::translate(modelLight, lightPos);
-        modelLight = glm::scale(modelLight, glm::vec3(0.2f)); // a smaller cube
-        lightCubeShader.setMat4("model", modelLight);
 
-        glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glm::mat4 modelLight = glm::mat4(1.0f);
+        modelLight = glm::translate(modelLight, 3.0f*glm::vec3((float)glm::cos(glfwGetTime()), glm::cos(glfwGetTime()), glm::sin(glfwGetTime())));
+        modelLight = glm::scale(modelLight, glm::vec3(3.0f));
+        lightCubeShader.setMat4("model", modelLight);
+//
+//        glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL_TEXTURE_2D,diffuseMap);;
+
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+        //ebo
+
+
+
+//        glm::mat4 modelLight=glm::mat4(1.0f);
+//        lightCubeShader.use();
+//        lightCubeShader.setMat4("projection", projection);
+//        lightCubeShader.setMat4("view", view);
+//        modelLight = glm::mat4(1.0f);
+//        modelLight = glm::translate(modelLight, lightPos);
+//        modelLight = glm::scale(modelLight, glm::vec3(0.2f)); // a smaller cube
+//        lightCubeShader.setMat4("model", modelLight);
+//
+//        glBindVertexArray(lightCubeVAO);
+//        glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
 
