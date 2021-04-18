@@ -312,6 +312,17 @@ int main() {
             glm::vec3( 2.3f, -3.3f, -4.0f),
             glm::vec3( 0.0f,  0.0f, -3.0f)
     };
+
+
+    vector<std::string> cube_faces
+            {
+                    FileSystem::getPath("resources/textures/tnt_texture.jpg"),
+                    FileSystem::getPath("resources/textures/tnt_texture.jpg"),
+                    FileSystem::getPath("resources/textures/tnt_texture.jpg"),
+                    FileSystem::getPath("resources/textures/tnt_texture.jpg"),
+                    FileSystem::getPath("resources/textures/tnt_texture.jpg"),
+                    FileSystem::getPath("resources/textures/tnt_texture.jpg")
+            };
     //cubes
     unsigned int cubeVBO, cubeVAO;
     glGenVertexArrays(1, &cubeVAO);
@@ -418,7 +429,7 @@ int main() {
 
 
 //
-//    unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/container.jpg").c_str());
+//    unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/tnt_texture.jpg").c_str());
 //
 //    cubemapShader.use();
 //    cubemapShader.setInt("texture1", 0);
