@@ -40,6 +40,7 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
+int blinn=0;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -155,15 +156,16 @@ int main() {
     // -------------------------
 
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
-    Shader tntShader("resources/shaders/multiple_lights.vs", "resources/shaders/multiple_lights.fs");
+    Shader tntShader("resources/shaders/tnt.vs", "resources/shaders/tnt.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     Shader lightCubeShader("light_cube.vs", "light_cube.fs");
-    // load models
-    // -----------
+    Shader flameShader("resources/shaders/blending.vs","resources/shaders/blending.fs");
+
+
     Model ourModel("resources/objects/Skull/12140_Skull_v3_L2.obj");
     ourModel.SetShaderTextureNamePrefix("material.");
 
-    glm::vec3 lightPos(0.0f, 1.0f, 2.0f);
+    glm::vec3 lightPos(0.0f, -10.0f, 0.0f);
 
     float skyboxVertices[] = {
             -1.0f,  1.0f, -1.0f,
@@ -289,12 +291,73 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    unsigned  int diffuseMap=loadTexture(FileSystem::getPath("resources/textures/tnt2.jpeg").c_str());
-
-    tntShader.use();
-    tntShader.setInt("material.diffuse", 0);
 
 
+    int fires=5000;
+    float * rotateAngle=new float[fires];
+    float x,y,z,div,tempY;
+    y=-6.5f;
+    glm::vec3* firePosition= new glm::vec3[fires];
+    for(int i=0;i<fires;++i){
+
+        rotateAngle[i]=(rand()%1000)/100+(rand()%1000)/1000 ;
+
+
+        if(i%10==0){
+            y+=0.5;
+
+        }
+        if(i%19){
+            y+=1.0;
+        }
+
+        div=std::rand()%2000;
+
+        x=std::rand()%200/div;
+        z=std::rand()%200/div;
+        if(i%4==0){
+            x*=-1;
+            z*=-1;
+        }
+        if(i%4==1) {
+            x *= -1;
+            z *= 1;
+        }
+        if(i%4==2) {
+            x *= 1;
+            z *= -1;
+        }
+
+        firePosition[i]=glm::vec3(x,y,z);
+        y=-6.5f;
+    }
+
+
+
+    float transparentVertices[] = {
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+
+
+
+    unsigned int transparentVAO, transparentVBO;
+    glGenVertexArrays(1, &transparentVAO);
+    glGenBuffers(1, &transparentVBO);
+    glBindVertexArray(transparentVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glBindVertexArray(0);
     //ebo
     float ebo_vertices[] = {
             -0.5f, -0.5f, -0.5f, // levo dole nazad
@@ -348,7 +411,7 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 
     glBindVertexArray(0);
     //kraj ebo
@@ -379,6 +442,34 @@ int main() {
     unsigned int cubemapTexture = loadCubemap(faces);
 
 
+
+    unsigned  int diffuseMap=loadTexture(FileSystem::getPath("resources/textures/tnt2.jpeg").c_str());
+
+
+    tntShader.use();
+    tntShader.setInt("material.diffuse", 0);
+
+    tntShader.use();
+    // light properties
+    tntShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+    tntShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+    tntShader.setVec3("light.specular", 0.0f, 0.0f, 0.0f);
+
+    // material properties
+    tntShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+    tntShader.setFloat("material.shininess", 64.0f);
+
+
+
+    unsigned int transparentTexture=loadTexture(FileSystem::getPath("resources/textures/flame.png").c_str());
+    unsigned int transparentTexture2=loadTexture(FileSystem::getPath("resources/textures/flame2.png").c_str());
+
+
+
+    flameShader.use();
+    flameShader.setInt("texture1",0);
+
+
     PointLight& pointLight = programState->pointLight;
     pointLight.position = lightPos;
     pointLight.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
@@ -388,10 +479,6 @@ int main() {
     pointLight.constant = 0.1f;
     pointLight.linear = 0.009f;
     pointLight.quadratic = 0.0001f;
-
-
-    int degree=0;
-    int lin=1;
 
 
 
@@ -419,25 +506,16 @@ int main() {
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
 
-//
+
 
         tntShader.use();
 
         tntShader.setVec3("light.direction", glm::vec3(glm::sin(glfwGetTime()),-1.0f,glm::cos(glfwGetTime())));
         tntShader.setVec3("viewPos", programState->camera.Position);
 
-        // light properties
-        tntShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        tntShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-        tntShader.setVec3("light.specular", 0.0f, 0.0f, 0.0f);
-
-        // material properties
-        tntShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-        tntShader.setFloat("material.shininess", 64.0f);
 
         tntShader.setMat4("projection", projection);
         tntShader.setMat4("view", view);
-
 
 
         glActiveTexture(GL_TEXTURE0);
@@ -455,42 +533,55 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
         }
+
+
         lightCubeShader.use();
         projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
         lightCubeShader.setMat4("projection", projection);
         view = programState->camera.GetViewMatrix();
         lightCubeShader.setMat4("view", view);
 
+
+
         glm::mat4 modelLight = glm::mat4(1.0f);
         modelLight = glm::translate(modelLight, lightPos);
         modelLight = glm::scale(modelLight, glm::vec3(0.8f));
         lightCubeShader.setMat4("model", modelLight);
-//
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D,diffuseMap);;
+
+
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-        //ebo
+
+        flameShader.use();
+        flameShader.setMat4("projection",projection);
+        flameShader.setMat4("view",view);
+
+        glBindVertexArray(transparentVAO);
+        glBindTexture(GL_TEXTURE_2D,transparentTexture);
 
 
+        for(int i=0;i<fires/2;++i) {
+            glm::mat4 modelFlame = glm::mat4(1.0f);
+            modelFlame = glm::scale(modelFlame, glm::vec3(3.0f));
+            modelFlame = glm::translate(modelFlame,firePosition[i]);
 
-//        glm::mat4 modelLight=glm::mat4(1.0f);
-//        lightCubeShader.use();
-//        lightCubeShader.setMat4("projection", projection);
-//        lightCubeShader.setMat4("view", view);
-//        modelLight = glm::mat4(1.0f);
-//        modelLight = glm::translate(modelLight, lightPos);
-//        modelLight = glm::scale(modelLight, glm::vec3(0.2f)); // a smaller cube
-//        lightCubeShader.setMat4("model", modelLight);
-//
-//        glBindVertexArray(lightCubeVAO);
-//        glDrawArrays(GL_TRIANGLES, 0, 36);
+            modelFlame=glm::rotate(modelFlame,(float)glfwGetTime()+rotateAngle[i],glm::vec3(0.0f,1.0f,0.0f));
+            flameShader.setMat4("model", modelFlame);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        glBindTexture(GL_TEXTURE_2D,transparentTexture2);
 
+        for(int i=fires/2;i<fires;++i) {
+            glm::mat4 modelFlame = glm::mat4(1.0f);
+            modelFlame = glm::scale(modelFlame, glm::vec3(3.0f));
+            modelFlame = glm::translate(modelFlame,firePosition[i]);
+            modelFlame=glm::rotate(modelFlame,2*(float)glfwGetTime()+rotateAngle[i],glm::vec3(0.0f,-1.0f,0.0f));
 
-
-        // don't forget to enable shader before setting uniforms
+            flameShader.setMat4("model", modelFlame);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
         ourShader.use();
 
 
@@ -516,25 +607,24 @@ int main() {
         model = glm::translate(model,
                                programState->skullPosition); // translate it down so it's at the center of the scene
         model = glm::rotate(model, -1.5706f, glm::vec3(1.0f, 0.0f, 0.0f));
-//
-//
-//        if(degree==10){
-//            lin=-1;
-//
-//        }
-//        else if(degree==-10){
-//            lin=1;
-//        }
-//        degree+=lin;
-//
-//
-//        model=glm::rotate(model,degree*0.073533f,glm::vec3(cos(currentFrame),sin(currentFrame),0.0f));
+
         model = glm::rotate(model, -(float)glfwGetTime()*2, glm::vec3(0.0f, 0.0f, 1.0f));
 
         model = glm::scale(model, glm::vec3(programState->skullScale));    // it's a bit too big for our scene, so scale it down
 
         ourShader.setMat4("model", model);
+        ourShader.setInt("blinn",blinn);
+
+        if(blinn==1){
+            std::cout<<"blinn"<<endl;
+        }
+        else{
+            std::cout<<"phong"<<endl;
+        }
+
         ourModel.Draw(ourShader);
+
+
 
         projection = glm::perspective(glm::radians(programState->camera.Zoom),(float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 1000.0f);
         view = programState->camera.GetViewMatrix();
@@ -553,6 +643,8 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
+
+
         //glBindVertexArray(0);
 
 
@@ -690,6 +782,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
     }
+    else if(key==GLFW_KEY_B && action==GLFW_PRESS){
+        blinn=!blinn;
+    }
 }
 
 unsigned int loadCubemap(vector<std::string> faces)
@@ -747,8 +842,8 @@ unsigned int loadTexture(const char * path)
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
